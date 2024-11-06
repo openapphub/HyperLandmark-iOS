@@ -74,18 +74,40 @@ using namespace cv;
     cv::Vec3d eav;
     _modelt->EstimateHeadPose((*_currentShape)[0], eav);
     _modelt->drawPose(image, (*_currentShape)[0], 50);
-    parallel_for_(cv::Range(0, MAX_FACE_NUM), [&](const cv::Range& range){
-        for (int i = range.start; i < range.end; i++){
-            if (!(*_currentShape)[i].empty()){
-                int numLandmarks = (*_currentShape)[i].cols / 2;
-                for (int j = 0; j < numLandmarks; j++){
-                    int x = (*_currentShape)[i].at<float>(j);
-                    int y = (*_currentShape)[i].at<float>(j + numLandmarks);
-                    cv::circle(image, cv::Point(x, y), 2, cv::Scalar(0, 0, 255), -1);
-                }
-            }
-        }
-    });
+    
+    // 检测张嘴闭嘴
+      if (!(*_currentShape)[0].empty()) {
+          int numLandmarks = (*_currentShape)[0].cols / 2;
+          
+          // 获取关键点 62, 57, 66 的坐标
+          cv::Point2f point62 = cv::Point2f((*_currentShape)[0].at<float>(62), (*_currentShape)[0].at<float>(62 + numLandmarks));
+          cv::Point2f point57 = cv::Point2f((*_currentShape)[0].at<float>(57), (*_currentShape)[0].at<float>(57 + numLandmarks));
+          cv::Point2f point66 = cv::Point2f((*_currentShape)[0].at<float>(66), (*_currentShape)[0].at<float>(66 + numLandmarks));
+          
+          // 计算差值
+          float diff66_62 = abs(point66.y - point62.y);
+          float diff57_66 = abs(point57.y - point66.y);
+          
+          // 判断张嘴或闭嘴
+          if (diff66_62 > diff57_66) {
+              NSLog(@"张嘴");
+          } else {
+              NSLog(@"闭嘴");
+          }
+      }
+    // 注释掉或删除绘制特征点的代码
+//    parallel_for_(cv::Range(0, MAX_FACE_NUM), [&](const cv::Range& range){
+//        for (int i = range.start; i < range.end; i++){
+//            if (!(*_currentShape)[i].empty()){
+//                int numLandmarks = (*_currentShape)[i].cols / 2;
+//                for (int j = 0; j < numLandmarks; j++){
+//                    int x = (*_currentShape)[i].at<float>(j);
+//                    int y = (*_currentShape)[i].at<float>(j + numLandmarks);
+//                    cv::circle(image, cv::Point(x, y), 2, cv::Scalar(0, 0, 255), -1);
+//                }
+//            }
+//        }
+//    });
     NSTimeInterval end = [NSDate timeIntervalSinceReferenceDate];
     NSLog(@">>>> FPS: %f", 1.0f/(end - start));
 }
